@@ -12,6 +12,12 @@ grows in the substrate, not in the API.
 - **`system-prompt.md`** — an optional copy-in system prompt for weaker local models that
   forget to call tools, or actuate a device without checking the house first. Nudges the model
   to `get_home_state` before acting and to never actuate a gated device (lock/garage) on a guess.
+- **Continuous integration** — a GitHub Actions workflow runs the (zero-dependency, sub-second)
+  test suite on every push and PR across Node 18 / 20 / 22.
+- **Roadmap milestones** — `docs/ROADMAP.md` now maps RH-items to versions (v0.2 … v1.0) with a
+  per-release "done when", plus new items: RH-13 (router eval golden, pulled ahead of the panel),
+  RH-14 (resilience), RH-15 (hardening), RH-16 (proactive monitoring — the OP's "notify me while
+  away", noted as outside MCP's pull model), and RH-17 (config validation + entity discovery).
 
 ## [0.1.0] — 2026-08-04
 

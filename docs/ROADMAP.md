@@ -25,6 +25,19 @@ Home Assistant, and nothing has been proven on a *real* house yet.
 | **benched** | Built or specced, then deliberately **paused awaiting a dependency, decision, or measurement**. Not abandoned — will resume. |
 | **shelved** | Deliberately set aside / deprioritized indefinitely. Kept for the record, off the near path. |
 
+## Milestones (the finish line)
+
+Which RH items make up each release, so "done" is a real destination, not an open horizon.
+
+| Version | Theme | Items | Done when |
+|---|---|---|---|
+| **v0.1** | Core *(shipped)* | Phase 0 | Substrate, three verbs, reflex router, tests, docs — verified against a fake HA. |
+| **v0.2** | "Real house" | RH-01, RH-13, RH-14, RH-15 | It runs reliably against a **real** Home Assistant, guarded by a safety golden, failing honestly when HA is down. **Phase 0 turns `live` here.** |
+| **v0.3** | "One-click" | RH-02, RH-03, RH-17 | A non-technical user connects it without editing JSON or touching a terminal. |
+| **v0.4** | "Voice" | RH-04, RH-05 | Mic → house works end to end, reflex-fast for simple commands. |
+| **v1.0** | "Lives in the house" | RH-06, RH-07, RH-08, RH-09, RH-12 | Someone **other than the author** runs it daily as their smart-home voice assistant, installed from a single binary. |
+| **post-1.0** | Exploring | RH-10, RH-11, RH-16 | — |
+
 ## Phase 0 — Core (`v0.1`)
 
 - **RH-00 · The substrate + three verbs.** `home-core` (alias resolution, service mapping,
@@ -57,6 +70,15 @@ Home Assistant, and nothing has been proven on a *real* house yet.
   stays offline by default.
   *Acceptance: the bedtime + leaving flows actuate real devices; the gated lock refuses without
   `confirm:true`, actuates with it. This is the item that graduates Phase 0 from **done** to **live**.*
+- **RH-13 · Router utterance corpus + scorecard.** **planned** — the RM-00 analogue for this
+  repo: a labelled fixture of utterances (expected `handled` vs `escalate`, and for hits the
+  expected target/change) scored offline, so a grammar tweak can't silently start guessing or
+  over-escalating. Locked while the router is small, it guards `RH-06`/`RH-07`/`RH-08` before
+  they exist. *(Sequenced ahead of the panel/installer on purpose: a safety golden is far cheaper
+  to lock now than to retrofit after the grammar grows.)*
+  *Acceptance: a corpus run prints two numbers — **safety** (never actuates when it should
+  escalate; must be 100%) and **coverage** (handles what it should) — and a committed golden
+  makes any regression fail the run, exactly like resonance-memory's `golden.json`.*
 - **RH-02 · Setup panel.** **planned** — a local `127.0.0.1` control panel (mirroring
   resonance-memory's Connect panel): paste the HA URL + token, auto-discover entities, and build
   the alias/gate config by clicking rather than hand-editing JSON.
@@ -66,13 +88,13 @@ Home Assistant, and nothing has been proven on a *real* house yet.
   Desktop MCP config, same shape as resonance-memory's installer.
   *Acceptance: Connect adds an `mcpServers` entry launching `resonance-home --mcp`, preserves any
   other configured servers, and leaves a `.bak`; Disconnect removes only our entry.*
-- **RH-13 · Router utterance corpus + scorecard.** **planned** — the RM-00 analogue for this
-  repo: a labelled fixture of utterances (expected `handled` vs `escalate`, and for hits the
-  expected target/change) scored offline, so a grammar tweak can't silently start guessing or
-  over-escalating. Guards `RH-06`/`RH-07`/`RH-08` before they exist.
-  *Acceptance: a corpus run prints two numbers — **safety** (never actuates when it should
-  escalate; must be 100%) and **coverage** (handles what it should) — and a committed golden
-  makes any regression fail the run, exactly like resonance-memory's `golden.json`.*
+- **RH-17 · Config validation + entity discovery.** **planned** — validate `home-config.json` on
+  load with clear, key-pointing errors instead of silently falling back to an empty house, and add
+  a helper that dumps a live HA's entities (friendly name → `entity_id`) to bootstrap the aliases
+  before the panel exists.
+  *Acceptance: a malformed or unknown-entity config fails with a specific message naming the
+  offending key; `resonance-home --entities` (or a small script) prints copy-pasteable alias lines
+  from a live HA.*
 - **RH-14 · Resilience: HA unreachable / partial failure.** **planned** — define and test what
   happens when Home Assistant is down mid-command or one entity in a group fails: the reflex path
   and the model path must both degrade honestly, never claim a change that didn't land.
@@ -128,6 +150,13 @@ Home Assistant, and nothing has been proven on a *real* house yet.
   *Acceptance: with both servers connected, the model personalises a home action from a stored
   memory (e.g. a preferred temperature) with no code path between the repos, via a documented,
   reproducible setup.*
+- **RH-16 · Proactive monitoring / notifications.** **exploring** — the OP's "…notify me if
+  anything important happens while I'm away." This is **outside MCP's pull-only** request/response
+  model, so it belongs to a small watch loop in the orchestrator/daemon, not the verbs — a real
+  architectural addition, flagged here so the original vision isn't quietly dropped.
+  *Acceptance: a configurable watch delivers one real unsolicited notification (e.g. a door left
+  unlocked after midnight) to a chosen channel, with the mechanism documented as separate from the
+  MCP path.*
 
 ## Phase 5 — Packaging
 
