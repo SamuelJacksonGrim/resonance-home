@@ -45,6 +45,42 @@ the model.
 - **A small local model** does the intent reasoning.
 - **resonance-memory** (optional) makes it feel like it knows *you*.
 
+### Two tiers: a reflex layer and a cognitive layer
+
+Running the full `Whisper → 30B → tool-call → HA → TTS` loop for *"turn on the kitchen
+lights"* is overkill — and the latency is exactly what makes a local voice assistant feel
+worse than Alexa. So control is split in two (System 1 / System 2):
+
+```
+  REFLEX  (fast)   Whisper ─▶ router.js ────────────▶ home-core ─▶ HA      (no model — instant)
+  COGNITIVE (slow) Whisper ─▶ 30B ─▶ MCP server ────▶ home-core ─▶ HA ─▶ TTS  (model reasons)
+```
+
+- **`router.js`** is a deterministic grammar over the **same** alias registry and the
+  **same** home-core the MCP server uses — one substrate, two callers. It handles the
+  unambiguous, safe, single-intent commands (*"lights off"*, *"set the thermostat to 18"*)
+  with **no model in the loop**.
+- It **never blocks.** Anything uncertain — no grammar match, an unknown or **ambiguous**
+  target (*"turn on the lights"* → which?), a **gated** device (a lock/garage), or a verb a
+  device can't take — *fails open* and escalates to the 30B. A gated device is **never**
+  reflex-actuated; the confirm flow belongs to the model.
+- Alexa-speed for *"lights on"*; the 30B reserved for *"set the house up for cooking."*
+
+Try the boundary yourself, offline, no Home Assistant needed:
+
+```bash
+npm run router -- "turn on the kitchen lights"   # REFLEX (no model)
+npm run router -- "set the thermostat to 18"     # REFLEX (no model)
+npm run router -- "turn on the lights"           # ESCALATE (ambiguous)
+npm run router -- "unlock the front door"        # ESCALATE (gated/no-match — model owns it)
+npm run router -- "set the house up for movie night"  # ESCALATE (no-match — real reasoning)
+```
+
+> The orchestrator that owns the mic wires these together: run each utterance through the
+> router; if `handled`, speak the reply; if `handled:false`, hand `utterance` to the model.
+> That orchestrator (Whisper + the LLM client) is the standard front-end you add around
+> this — the router and the MCP server are the parts that live here.
+
 ## The three verbs
 
 | Verb | What it does |
@@ -96,10 +132,14 @@ npm run mcp # run the MCP server on stdio
 
 ## Status
 
-Early (`v0.1`). The core (three verbs, alias resolution, safety gates, routines) is built and
-tested against a fake Home Assistant. Next: a setup panel for token + aliases, real-HA smoke
-testing, and covers/scenes polish. Same stack as Resonance Memory — **pure Node standard library,
-zero runtime dependencies, MCP over stdio.**
+Early (`v0.1`). Built and tested against a fake Home Assistant (25 tests, `npm test`):
+
+- the three MCP verbs, alias resolution, safety gates, routines (`home-core.js` / `server.js`);
+- the **reflex router** (`router.js`) — the fast-path layer, with its offline dry-run CLI.
+
+Next: a setup panel for token + aliases, real-HA smoke testing, and covers/scenes polish. Same
+stack as Resonance Memory — **pure Node standard library, zero runtime dependencies, MCP over
+stdio.**
 
 ## License
 

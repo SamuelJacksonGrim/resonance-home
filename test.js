@@ -20,6 +20,7 @@
 
 const assert = require("assert");
 const { createCore, resolveService } = require("./home-core.js");
+const { createRouter } = require("./router.js");
 
 // ------------------------------------------------------------- tiny test runner
 let passed = 0, failed = 0;
@@ -152,6 +153,89 @@ const CONFIG = {
     const c = createCore({ ha: fakeHA(STATES), config: CONFIG });
     const out = await c.runRoutine("party");
     assert.ok(out.includes("bedtime"), "names an available routine");
+  });
+
+  // ------------------------------------------------------------ the reflex router
+  // The fast-path layer: it must EXECUTE the unambiguous/safe commands via home-core
+  // and FAIL OPEN (escalate to the model) on everything else - especially anything
+  // gated. A router that ever actuates a lock, or guesses at "the lights", is a bug.
+  console.log("\nrouter (reflex layer)");
+  const RCONFIG = { ...CONFIG, aliases: { ...CONFIG.aliases, "blinds": "cover.blinds" } };
+  const mkRouter = (ha) => { const core = createCore({ ha, config: RCONFIG }); return createRouter({ core, config: RCONFIG }); };
+
+  await atest("simple on/off is handled with no ambiguity", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("turn on the kitchen lights");
+    assert.strictEqual(r.handled, true);
+    assert.strictEqual(ha.calls[0].service, "turn_on");
+    assert.strictEqual(ha.calls[0].data.entity_id, "light.kitchen");
+  });
+  await atest("politeness/filler is stripped before matching", async () => {
+    const r = await mkRouter(fakeHA(STATES)).handle("hey, could you please turn on the kitchen light");
+    assert.strictEqual(r.handled, true);
+    assert.ok(r.reply.includes("kitchen light"));
+  });
+  await atest("group alias actuates the whole group in one command", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("turn the downstairs lights off");
+    assert.strictEqual(r.handled, true);
+    assert.strictEqual(ha.calls.length, 2); // kitchen + hall (STATES has no living_room)
+  });
+  await atest("'set X to N' routes to the thermostat", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("set the thermostat to 19 degrees");
+    assert.strictEqual(r.handled, true);
+    assert.strictEqual(ha.calls[0].service, "set_temperature");
+    assert.strictEqual(ha.calls[0].data.temperature, 19);
+  });
+  await atest("'set X to N percent' becomes brightness, not temperature", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("set the kitchen light to 50 percent");
+    assert.strictEqual(r.handled, true);
+    assert.strictEqual(ha.calls[0].service, "turn_on");
+    assert.ok(ha.calls[0].data.brightness > 120 && ha.calls[0].data.brightness < 135);
+  });
+  await atest("open/close drives a cover", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("open the blinds");
+    assert.strictEqual(r.handled, true);
+    assert.strictEqual(ha.calls[0].service, "open_cover");
+  });
+
+  await atest("AMBIGUOUS target escalates and actuates nothing", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("turn on the lights");
+    assert.strictEqual(r.handled, false);
+    assert.strictEqual(r.escalate, "ambiguous");
+    assert.strictEqual(ha.calls.length, 0);
+  });
+  await atest("GATED device (lock/garage) never reflex-actuates - escalates", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("open the front door"); // front door is a gated lock
+    assert.strictEqual(r.handled, false);
+    assert.strictEqual(r.escalate, "gated");
+    assert.strictEqual(ha.calls.length, 0);
+  });
+  await atest("unknown target escalates (never guesses)", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("turn off everything");
+    assert.strictEqual(r.handled, false);
+    assert.strictEqual(r.escalate, "unknown-target");
+    assert.strictEqual(ha.calls.length, 0);
+  });
+  await atest("verb the device can't take escalates (temperature on a light)", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("set the kitchen light to 20");
+    assert.strictEqual(r.handled, false);
+    assert.strictEqual(r.escalate, "unsupported");
+    assert.strictEqual(ha.calls.length, 0);
+  });
+  await atest("a non-command (no grammar) escalates", async () => {
+    const ha = fakeHA(STATES);
+    const r = await mkRouter(ha).handle("what's the weather like tomorrow");
+    assert.strictEqual(r.handled, false);
+    assert.strictEqual(r.escalate, "no-match");
+    assert.strictEqual(ha.calls.length, 0);
   });
 
   console.log("\n" + passed + " passed, " + failed + " failed");

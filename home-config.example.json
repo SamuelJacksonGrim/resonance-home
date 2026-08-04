@@ -7,6 +7,7 @@
     "living room light": "light.living_room",
     "downstairs lights": ["light.kitchen", "light.hall", "light.living_room"],
     "thermostat":        "climate.hall",
+    "blinds":            "cover.blinds",
     "front door":        "lock.front_door",
     "garage door":       "cover.garage"
   },

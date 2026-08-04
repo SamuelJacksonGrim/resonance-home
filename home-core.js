@@ -72,6 +72,20 @@ function resolveService(domain, change) {
 function domainOf(entityId) { return String(entityId).split(".")[0]; }
 
 /*
+ * Resolve a friendly target to concrete entity_ids (exact, case-insensitive). Pulled to
+ * module scope so the MCP verbs (createCore, below) and the reflex router (router.js)
+ * expand a name to entities through the EXACT same code - one alias map, one resolver,
+ * two callers. An unknown target resolves to [] so a caller can say "I don't know a 'X'"
+ * rather than actuate the wrong thing.
+ */
+function resolveAlias(aliases, target) {
+  if (!aliases || !target) return [];
+  if (aliases[target]) return [].concat(aliases[target]);
+  const key = Object.keys(aliases).find((k) => k.toLowerCase() === String(target).toLowerCase());
+  return key ? [].concat(aliases[key]) : [];
+}
+
+/*
  * Build the four... no - the THREE verbs over an injected environment.
  *   ha        an HAClient (or any object with getStates()/callService())
  *   config    { aliases, gates, routines } - the substrate's knowledge of THIS house
@@ -89,15 +103,9 @@ function createCore({ ha, config = {} }) {
     for (const id of [].concat(target)) if (!friendlyOf[id]) friendlyOf[id] = name;
   }
 
-  // Resolve a friendly target to concrete entity_ids. An unknown target resolves to
-  // [] so the caller can say "I don't know a 'X'" rather than actuate the wrong thing.
-  function resolve(target) {
-    if (!target) return [];
-    if (aliases[target]) return [].concat(aliases[target]);
-    // Case-insensitive fallback so "Downstairs Lights" still finds "downstairs lights".
-    const key = Object.keys(aliases).find((k) => k.toLowerCase() === String(target).toLowerCase());
-    return key ? [].concat(aliases[key]) : [];
-  }
+  // Resolve a friendly target to concrete entity_ids (via the shared module-level
+  // resolver, so the router and the MCP verbs never drift on how a name maps).
+  function resolve(target) { return resolveAlias(aliases, target); }
 
   // Render one HA state row as a short human line: "Front door: unlocked".
   function line(s) {
@@ -181,4 +189,4 @@ function createCore({ ha, config = {} }) {
   return { getHomeState, setDevices, runRoutine };
 }
 
-module.exports = { createCore, resolveService, REPORT_DOMAINS };
+module.exports = { createCore, resolveService, resolveAlias, domainOf, REPORT_DOMAINS };
