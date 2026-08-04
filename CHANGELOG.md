@@ -8,7 +8,10 @@ grows in the substrate, not in the API.
 
 ## [Unreleased]
 
-_Nothing yet._
+### Added
+- **`system-prompt.md`** — an optional copy-in system prompt for weaker local models that
+  forget to call tools, or actuate a device without checking the house first. Nudges the model
+  to `get_home_state` before acting and to never actuate a gated device (lock/garage) on a guess.
 
 ## [0.1.0] — 2026-08-04
 

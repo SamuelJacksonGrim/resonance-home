@@ -44,6 +44,7 @@ model cannot misuse it.**
 | `ha-client.js` | The thinnest possible Home Assistant REST wrapper (`getStates` / `callService`) over built-in `fetch`. Knows nothing about aliases/gates — that's home-core's job. A fake stands in for it in tests. |
 | `test.js` | The dependency-free suite (`npm test`). 25 tests, sub-second, driven against a fake Home Assistant. |
 | `home-config.example.json` | The house description to copy: aliases, gates, routines. |
+| `system-prompt.md` | Optional copy-in system prompt for weaker models that forget to call tools (or actuate without checking). Baked into the exe at `RH-12`. |
 | `docs/ROADMAP.md` | Phased plan (`RH-01` …) with acceptance criteria. |
 | `README.md` / `CHANGELOG.md` | User-facing overview / Keep-a-Changelog history. |
 

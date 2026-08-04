@@ -122,6 +122,12 @@ npm test    # dependency-free suite (drives the core against a fake HA — no HA
 npm run mcp # run the MCP server on stdio
 ```
 
+**Weaker models forgetting to use the tools?** The tool descriptions already tell the model
+*when* to check state and act — but smaller local models sometimes forget, or actuate before
+checking. [`system-prompt.md`](system-prompt.md) is an optional block you can paste into your
+app's system prompt to remind it every turn (and to reinforce that gated devices are never
+opened on a guess).
+
 ## Config (`home-config.example.json`)
 
 ```json
