@@ -1,0 +1,17 @@
+{
+  "name": "resonance-home",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A local memory-and-hands for your AI's smart home. An MCP server that lets a small local LLM reason over and control a Home Assistant house, safely. Nothing leaves your machine.",
+  "license": "GPL-3.0-or-later",
+  "author": "Samuel Jackson Grim",
+  "type": "commonjs",
+  "main": "entry.js",
+  "bin": { "resonance-home": "entry.js" },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node test.js",
+    "mcp": "node server.js"
+  },
+  "keywords": ["mcp", "home-assistant", "smart-home", "llm", "local-first", "automation"]
+}

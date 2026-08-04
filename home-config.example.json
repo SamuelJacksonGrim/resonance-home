@@ -1,0 +1,29 @@
+{
+  "_comment": "Copy to ~/.resonance-home/home-config.json (or set HOME_CONFIG_PATH) and edit for YOUR house. entity_ids come from Home Assistant (Developer Tools -> States).",
+
+  "aliases": {
+    "kitchen light":     "light.kitchen",
+    "hall light":        "light.hall",
+    "living room light": "light.living_room",
+    "downstairs lights": ["light.kitchen", "light.hall", "light.living_room"],
+    "thermostat":        "climate.hall",
+    "front door":        "lock.front_door",
+    "garage door":       "cover.garage"
+  },
+
+  "gates": {
+    "lock.front_door": "confirm",
+    "cover.garage":    "confirm"
+  },
+
+  "routines": {
+    "bedtime": [
+      { "target": "downstairs lights", "state": "off" },
+      { "target": "thermostat", "temperature": 17 }
+    ],
+    "leaving": [
+      { "target": "downstairs lights", "state": "off" },
+      { "target": "thermostat", "temperature": 15 }
+    ]
+  }
+}

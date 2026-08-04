@@ -1,0 +1,10 @@
+# Node
+node_modules/
+
+# Local house config + secrets (the real one is per-machine; the .example is tracked)
+home-config.json
+.env
+
+# Local backups
+*.bak
+*.bak-*
