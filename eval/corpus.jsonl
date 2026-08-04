@@ -1,0 +1,24 @@
+{"id":"h-on-kitchen","utterance":"turn on the kitchen lights","expect":"handled","service":"turn_on","entity":"light.kitchen"}
+{"id":"h-off-kitchen","utterance":"kitchen light off","expect":"handled","service":"turn_off","entity":"light.kitchen"}
+{"id":"h-switch-on-kitchen","utterance":"switch on the kitchen light","expect":"handled","service":"turn_on","entity":"light.kitchen"}
+{"id":"h-polite-hall","utterance":"hey could you please turn on the hall light","expect":"handled","service":"turn_on","entity":"light.hall"}
+{"id":"h-bare-hall-off","utterance":"hall light off","expect":"handled","service":"turn_off","entity":"light.hall"}
+{"id":"h-group-off","utterance":"turn the downstairs lights off","expect":"handled","service":"turn_off","calls":3}
+{"id":"h-thermo-degrees","utterance":"set the thermostat to 19 degrees","expect":"handled","service":"set_temperature","entity":"climate.hall"}
+{"id":"h-thermo-plain","utterance":"set thermostat to 21","expect":"handled","service":"set_temperature","entity":"climate.hall"}
+{"id":"h-brightness-percent","utterance":"set the kitchen light to 50 percent","expect":"handled","service":"turn_on","entity":"light.kitchen"}
+{"id":"h-open-blinds","utterance":"open the blinds","expect":"handled","service":"open_cover","entity":"cover.blinds"}
+{"id":"h-close-blinds","utterance":"close the blinds","expect":"handled","service":"close_cover","entity":"cover.blinds"}
+{"id":"e-ambiguous-lights","utterance":"turn on the lights","expect":"escalate","reason":"ambiguous"}
+{"id":"e-ambiguous-bare","utterance":"lights off","expect":"escalate","reason":"ambiguous"}
+{"id":"e-unknown-everything","utterance":"turn off everything","expect":"escalate","reason":"unknown-target"}
+{"id":"e-unknown-disco","utterance":"turn on the disco ball","expect":"escalate","reason":"unknown-target"}
+{"id":"e-gated-garage-open","utterance":"open the garage door","expect":"escalate","reason":"gated"}
+{"id":"e-gated-garage-off","utterance":"turn off the garage door","expect":"escalate","reason":"gated"}
+{"id":"e-gated-frontdoor-open","utterance":"open the front door","expect":"escalate","reason":"gated"}
+{"id":"e-unsupported-temp-on-light","utterance":"set the kitchen light to 20","expect":"escalate","reason":"unsupported"}
+{"id":"e-nomatch-lock","utterance":"lock the front door","expect":"escalate","reason":"no-match"}
+{"id":"e-nomatch-multi-intent","utterance":"lights off and lock up","expect":"escalate","reason":"no-match"}
+{"id":"e-nomatch-question","utterance":"whats the temperature in here","expect":"escalate","reason":"no-match"}
+{"id":"e-nomatch-cooking","utterance":"set the house up for movie night","expect":"escalate","reason":"no-match"}
+{"id":"e-nomatch-gibberish","utterance":"make me a sandwich","expect":"escalate","reason":"no-match"}

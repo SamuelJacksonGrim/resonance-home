@@ -161,12 +161,15 @@ opened on a guess).
 | `ha-client.js` | The Home Assistant REST wrapper (`getStates` / `callService`). |
 | `entry.js` | Mode dispatch (`--mcp`). |
 | `test.js` | The dependency-free test suite (25 tests). |
+| `eval/` | The router eval golden (`RH-13`): a labelled utterance corpus scored into safety + coverage, gated by `golden.json`. |
 | `home-config.example.json` | The house description to copy and edit. |
 
 ## Docs
 
 - [`CLAUDE.md`](CLAUDE.md) — architecture, invariants, and conventions (for AI assistants and contributors).
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan (`RH-01` …).
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup and the before-a-PR checklist.
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan with milestones (`RH-01` …).
+- [`eval/README.md`](eval/README.md) — the router eval golden (safety + coverage).
 - [`CHANGELOG.md`](CHANGELOG.md) — release history (Keep a Changelog).
 
 ## Status

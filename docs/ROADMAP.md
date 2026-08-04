@@ -70,15 +70,15 @@ Which RH items make up each release, so "done" is a real destination, not an ope
   stays offline by default.
   *Acceptance: the bedtime + leaving flows actuate real devices; the gated lock refuses without
   `confirm:true`, actuates with it. This is the item that graduates Phase 0 from **done** to **live**.*
-- **RH-13 · Router utterance corpus + scorecard.** **planned** — the RM-00 analogue for this
-  repo: a labelled fixture of utterances (expected `handled` vs `escalate`, and for hits the
-  expected target/change) scored offline, so a grammar tweak can't silently start guessing or
-  over-escalating. Locked while the router is small, it guards `RH-06`/`RH-07`/`RH-08` before
-  they exist. *(Sequenced ahead of the panel/installer on purpose: a safety golden is far cheaper
-  to lock now than to retrofit after the grammar grows.)*
-  *Acceptance: a corpus run prints two numbers — **safety** (never actuates when it should
-  escalate; must be 100%) and **coverage** (handles what it should) — and a committed golden
-  makes any regression fail the run, exactly like resonance-memory's `golden.json`.*
+- **RH-13 · Router utterance corpus + scorecard.** **done** — the RM-00 analogue for this repo
+  (`eval/`): a labelled fixture of utterances scored offline, so a grammar tweak can't silently
+  start guessing or over-escalating. Locked while the router is small, it guards
+  `RH-06`/`RH-07`/`RH-08` before they exist. *(Sequenced ahead of the panel/installer on purpose:
+  a safety golden is far cheaper to lock now than to retrofit after the grammar grows.)*
+  *Acceptance (met): `npm run eval` prints **safety** (100%, verified to fail and refuse
+  `--accept` when a case actuates something it shouldn't) and **coverage** (100%, 11/11 handled
+  correctly); `golden.json` is committed and the run fails on any outcome change, added/removed
+  case, or coverage drop. Runs in CI on Node 18/20/22.*
 - **RH-02 · Setup panel.** **planned** — a local `127.0.0.1` control panel (mirroring
   resonance-memory's Connect panel): paste the HA URL + token, auto-discover entities, and build
   the alias/gate config by clicking rather than hand-editing JSON.

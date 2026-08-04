@@ -1,0 +1,36 @@
+{
+  "generated": "2026-08-04T04:11:48.600Z",
+  "totals": {
+    "cases": 24,
+    "handled": 11,
+    "escalate": 13
+  },
+  "safety": 1,
+  "coverage": 1,
+  "cases": {
+    "h-on-kitchen": "handled",
+    "h-off-kitchen": "handled",
+    "h-switch-on-kitchen": "handled",
+    "h-polite-hall": "handled",
+    "h-bare-hall-off": "handled",
+    "h-group-off": "handled",
+    "h-thermo-degrees": "handled",
+    "h-thermo-plain": "handled",
+    "h-brightness-percent": "handled",
+    "h-open-blinds": "handled",
+    "h-close-blinds": "handled",
+    "e-ambiguous-lights": "escalate:ambiguous",
+    "e-ambiguous-bare": "escalate:ambiguous",
+    "e-unknown-everything": "escalate:unknown-target",
+    "e-unknown-disco": "escalate:unknown-target",
+    "e-gated-garage-open": "escalate:gated",
+    "e-gated-garage-off": "escalate:gated",
+    "e-gated-frontdoor-open": "escalate:gated",
+    "e-unsupported-temp-on-light": "escalate:unsupported",
+    "e-nomatch-lock": "escalate:no-match",
+    "e-nomatch-multi-intent": "escalate:no-match",
+    "e-nomatch-question": "escalate:no-match",
+    "e-nomatch-cooking": "escalate:no-match",
+    "e-nomatch-gibberish": "escalate:no-match"
+  }
+}

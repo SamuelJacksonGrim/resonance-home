@@ -43,6 +43,7 @@ model cannot misuse it.**
 | `router.js` | **The reflex layer.** `createRouter({ core, config })` → `{ handle(utterance) }`. Deterministic grammar over the shared alias registry; executes safe commands via home-core, **fails open** (escalate to the model) on any uncertainty. Has an offline dry-run CLI. |
 | `ha-client.js` | The thinnest possible Home Assistant REST wrapper (`getStates` / `callService`) over built-in `fetch`. Knows nothing about aliases/gates — that's home-core's job. A fake stands in for it in tests. |
 | `test.js` | The dependency-free suite (`npm test`). 25 tests, sub-second, driven against a fake Home Assistant. |
+| `eval/` | **RH-13**, the router eval golden. `eval/run.js` scores `eval/corpus.jsonl` into safety + coverage and gates against `eval/golden.json`. See `eval/README.md`. |
 | `home-config.example.json` | The house description to copy: aliases, gates, routines. |
 | `system-prompt.md` | Optional copy-in system prompt for weaker models that forget to call tools (or actuate without checking). Baked into the exe at `RH-12`. |
 | `docs/ROADMAP.md` | Phased plan (`RH-01` …) with acceptance criteria. |
@@ -52,6 +53,8 @@ model cannot misuse it.**
 
 ```bash
 npm test                              # full suite (node test.js) — fast, dependency-free
+npm run eval                          # RH-13 router golden — safety (100%) + coverage
+npm run eval -- --accept              # lock the current scorecard in as eval/golden.json
 npm run mcp                           # run the MCP server on stdio (node server.js)
 npm run router -- "turn on the lights"  # dry-run the reflex router offline (no HA needed)
 ```
@@ -96,8 +99,10 @@ npm run router -- "turn on the lights"  # dry-run the reflex router offline (no 
 
 ## Before you push
 
-- **Run `npm test`.** Dependency-free, sub-second. 25 tests; the router's fail-open and
-  never-actuate-a-gate properties are regression-guarded there — keep them green.
+- **Run `npm test` and `npm run eval`.** Dependency-free, sub-second. The router's fail-open and
+  never-actuate-a-gate properties are guarded in both — the eval's **safety** number must stay
+  100%. If you extend the router grammar, add corpus cases (safety cases first) and re-accept the
+  golden before pushing.
 - **A behaviour change isn't done until the docs change with it** — `README.md`, `CHANGELOG.md`,
   and `docs/ROADMAP.md`. Grep for what you changed.
 - **Keep `home-core.js` the single implementation.** If you change alias resolution or the

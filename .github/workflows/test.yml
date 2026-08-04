@@ -19,3 +19,4 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - run: npm test
+      - run: npm run eval   # RH-13 router golden: safety must stay 100%

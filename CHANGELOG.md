@@ -12,8 +12,14 @@ grows in the substrate, not in the API.
 - **`system-prompt.md`** — an optional copy-in system prompt for weaker local models that
   forget to call tools, or actuate a device without checking the house first. Nudges the model
   to `get_home_state` before acting and to never actuate a gated device (lock/garage) on a guess.
+- **RH-13 · Router eval golden** (`eval/`) — a labelled utterance corpus (24 cases) scored
+  offline into **safety** (must be 100% — the harness refuses to `--accept` a golden below it)
+  and **coverage**, with a committed `golden.json` regression gate and an `--accept` workflow,
+  mirroring resonance-memory's RM-00. `npm run eval`.
+- **`CONTRIBUTING.md`** — dev setup, the invariants a change must hold, and the before-a-PR
+  checklist (tests + eval green, add safety corpus cases before extending the grammar).
 - **Continuous integration** — a GitHub Actions workflow runs the (zero-dependency, sub-second)
-  test suite on every push and PR across Node 18 / 20 / 22.
+  test suite **and the router eval golden** on every push and PR across Node 18 / 20 / 22.
 - **Roadmap milestones** — `docs/ROADMAP.md` now maps RH-items to versions (v0.2 … v1.0) with a
   per-release "done when", plus new items: RH-13 (router eval golden, pulled ahead of the panel),
   RH-14 (resilience), RH-15 (hardening), RH-16 (proactive monitoring — the OP's "notify me while
