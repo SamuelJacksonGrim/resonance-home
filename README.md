@@ -89,6 +89,21 @@ npm run router -- "set the house up for movie night"  # ESCALATE (no-match — r
 | `set_devices({ changes })` | Apply a batch of changes: `{ target, state?/temperature?/brightness?, confirm? }`. Gated devices refuse without `confirm:true`. |
 | `run_routine({ name })` | Run a household-defined routine (`"bedtime"`, `"leaving"`). Baked once by a human; a weak model gets orchestration for free. |
 
+## Requirements
+
+- **Node.js ≥ 18** — that's the whole toolchain. **Zero runtime dependencies** (no `npm install`
+  needed to run it; `package.json` has no `dependencies` block). Same rule as resonance-memory:
+  the dependency-free property is deliberate.
+- **A running Home Assistant** with a **long-lived access token** (Home Assistant → your profile
+  → Security). This server talks to HA's REST API; HA itself runs free on a Pi/mini-PC.
+- **An MCP client with a local model** — LM Studio, Claude Desktop, or anything that speaks MCP
+  over stdio — for the cognitive path.
+- **Optional, for voice:** a local STT (e.g. `whisper.cpp`) and a TTS on the front end. Those
+  aren't in this repo — they're the standard orchestrator you wrap around the router + server
+  (see the roadmap, `RH-04`).
+- **Optional:** [`resonance-memory`](https://github.com/SamuelJacksonGrim/resonance-memory) as a
+  second MCP server, so the model personalises with no coupling to this one.
+
 ## Setup
 
 1. In Home Assistant, create a **long-lived access token** (your profile → Security).
@@ -129,6 +144,24 @@ npm run mcp # run the MCP server on stdio
 - **`gates`** — `"confirm"` (needs `confirm:true` to actuate) or `"block"` (never remotely
   controllable). Put your locks and garage door here.
 - **`routines`** — named batches of changes, run by `run_routine`.
+
+## Repository layout
+
+| Path | Role |
+|---|---|
+| `server.js` | The MCP server — the three verbs over stdio (the cognitive path). |
+| `home-core.js` | The substrate: alias resolution, service mapping, safety gates, routines. One implementation, called by both the server and the router. |
+| `router.js` | The reflex layer — deterministic fast-path grammar + offline dry-run CLI. |
+| `ha-client.js` | The Home Assistant REST wrapper (`getStates` / `callService`). |
+| `entry.js` | Mode dispatch (`--mcp`). |
+| `test.js` | The dependency-free test suite (25 tests). |
+| `home-config.example.json` | The house description to copy and edit. |
+
+## Docs
+
+- [`CLAUDE.md`](CLAUDE.md) — architecture, invariants, and conventions (for AI assistants and contributors).
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan (`RH-01` …).
+- [`CHANGELOG.md`](CHANGELOG.md) — release history (Keep a Changelog).
 
 ## Status
 
