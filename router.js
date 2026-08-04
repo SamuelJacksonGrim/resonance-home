@@ -145,8 +145,14 @@ function createRouter({ core, config = {} }) {
 
     // Clean, safe, unambiguous -> execute through home-core (which re-validates gates
     // and mapping, so the router can never be the thing that bypasses a safety check).
-    const report = await core.setDevices([{ target: name, ...p.change }]);
-    return { handled: true, reply: ack(name, p.change), change: { target: name, ...p.change }, report };
+    const change = { target: name, ...p.change };
+    const res = await core.setDevices([change]);
+    // RH-14: never voice a cheerful "done" for a change that didn't land. If the actuation
+    // failed (HA unreachable), report that honestly instead of the success ack.
+    if (res.actuationFailed) {
+      return { handled: true, ok: false, reply: "couldn't reach " + name + " — Home Assistant may be down", change, report: res.text };
+    }
+    return { handled: true, ok: true, reply: ack(name, p.change), change, report: res.text };
   }
 
   return { handle };

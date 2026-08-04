@@ -95,12 +95,14 @@ Which RH items make up each release, so "done" is a real destination, not an ope
   *Acceptance: a malformed or unknown-entity config fails with a specific message naming the
   offending key; `resonance-home --entities` (or a small script) prints copy-pasteable alias lines
   from a live HA.*
-- **RH-14 · Resilience: HA unreachable / partial failure.** **planned** — define and test what
-  happens when Home Assistant is down mid-command or one entity in a group fails: the reflex path
-  and the model path must both degrade honestly, never claim a change that didn't land.
-  *Acceptance: with HA unreachable, `get_home_state` and `set_devices` return a clear error (not
-  a crash, not a false success); a group where one entity fails reports exactly which succeeded
-  and which didn't.*
+- **RH-14 · Resilience: HA unreachable / partial failure.** **done** — `set_devices` now returns
+  a structured `{ text, ok, actuationFailed, results }` so a caller can tell success from failure
+  without parsing prose; the reflex router checks `actuationFailed` and refuses to voice a
+  cheerful "done" for a change that didn't land; `get_home_state` degrades to a clear message
+  instead of throwing; `ha-client` distinguishes "unreachable" from an HTTP error.
+  *Acceptance (met): with HA unreachable, `get_home_state` returns a clear error and `set_devices`
+  reports failure (never a false success); a group where one entity fails names exactly which
+  succeeded and which didn't — all regression-tested in `test.js` (resilience section).*
 - **RH-15 · Network + secrets hardening.** **planned** — this controls a house, so treat it that
   way: the panel binds `127.0.0.1` only, the HA token is never written to logs or the store, and
   config file permissions are sane.

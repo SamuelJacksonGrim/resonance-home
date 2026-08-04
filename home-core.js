@@ -121,7 +121,14 @@ function createCore({ ha, config = {} }) {
   }
 
   async function getHomeState(query) {
-    const states = (await ha.getStates()) || [];
+    // RH-14: a read must degrade to a clear message, never crash the server or - worse -
+    // present a fabricated snapshot. If HA is unreachable, say so plainly.
+    let states;
+    try {
+      states = (await ha.getStates()) || [];
+    } catch (e) {
+      return "Couldn't read the home: " + e.message + ". Check Home Assistant is running and HA_URL/HA_TOKEN are set.";
+    }
     let rows = states.filter((s) => REPORT_DOMAINS.has(domainOf(s.entity_id)));
     // Optional keyword filter over the friendly name + area so "windows" or "downstairs"
     // narrows the snapshot. Empty query = the whole house.
@@ -139,34 +146,49 @@ function createCore({ ha, config = {} }) {
 
   /*
    * Apply a batch of changes. Each change: { target, state?, temperature?, brightness?,
-   * confirm? }. Returns a per-item report so the model can tell the user exactly what
-   * happened - including what it was NOT allowed to do (a gated lock without confirm).
+   * confirm? }.
+   *
+   * Returns a STRUCTURED result { text, ok, actuationFailed, results } rather than a bare
+   * string, so callers can tell success from failure without parsing prose (RH-14). The
+   * MCP server hands `text` to the model; the reflex router checks `actuationFailed` so it
+   * never reports a cheerful "done" for a change that didn't land. `results` carries a
+   * per-item { id, name, status, line } - status is one of ok / failed / needs_confirm /
+   * blocked / unsupported / unknown - so a partial group failure says exactly which entity
+   * succeeded and which didn't.
    */
   async function setDevices(changes) {
     changes = Array.isArray(changes) ? changes : (changes ? [changes] : []);
-    if (!changes.length) return "No changes given.";
-    const out = [];
+    if (!changes.length) return { text: "No changes given.", ok: true, actuationFailed: false, results: [] };
+    const results = [];
     for (const change of changes) {
       const ids = resolve(change.target);
-      if (!ids.length) { out.push("? unknown target: \"" + change.target + "\""); continue; }
+      if (!ids.length) { results.push({ target: change.target, status: "unknown", line: "? unknown target: \"" + change.target + "\"" }); continue; }
       for (const id of ids) {
+        const name = friendlyOf[id] || id;
         const gate = gates[id];
-        if (gate === "block") { out.push("x " + (friendlyOf[id] || id) + ": blocked (not remotely controllable)"); continue; }
+        if (gate === "block") { results.push({ id, name, status: "blocked", line: "x " + name + ": blocked (not remotely controllable)" }); continue; }
         if (gate === "confirm" && !change.confirm) {
-          out.push("! " + (friendlyOf[id] || id) + ": needs confirmation - re-send this change with confirm:true");
+          results.push({ id, name, status: "needs_confirm", line: "! " + name + ": needs confirmation - re-send this change with confirm:true" });
           continue;
         }
         const svc = resolveService(domainOf(id), change);
-        if (!svc) { out.push("? " + (friendlyOf[id] || id) + ": don't know how to apply that"); continue; }
+        if (!svc) { results.push({ id, name, status: "unsupported", line: "? " + name + ": don't know how to apply that" }); continue; }
         try {
           await ha.callService(svc.domain, svc.service, { entity_id: id, ...svc.data });
-          out.push("- " + (friendlyOf[id] || id) + ": " + svc.service.replace(/_/g, " "));
+          results.push({ id, name, status: "ok", line: "- " + name + ": " + svc.service.replace(/_/g, " ") });
         } catch (e) {
-          out.push("x " + (friendlyOf[id] || id) + ": failed (" + e.message + ")");
+          results.push({ id, name, status: "failed", line: "x " + name + ": failed (" + e.message + ")" });
         }
       }
     }
-    return out.join("\n");
+    const actuationFailed = results.some((r) => r.status === "failed");
+    const ok = results.every((r) => r.status === "ok");
+    let text = results.map((r) => r.line).join("\n");
+    // When an actuation actually failed (not a gate/unknown, which are decisions), the batch
+    // is suspect - HA may be unreachable - so say it once, plainly, so nothing reads as a
+    // silent or false success.
+    if (actuationFailed) text += "\n(Some changes did not apply — Home Assistant may be unreachable.)";
+    return { text, ok, actuationFailed, results };
   }
 
   /*
@@ -182,8 +204,8 @@ function createCore({ ha, config = {} }) {
       return known.length ? "No routine \"" + name + "\". Known routines: " + known.join(", ") + "."
                           : "No routines are configured for this house.";
     }
-    const report = await setDevices(routines[key]);
-    return "Ran routine \"" + key + "\":\n" + report;
+    const r = await setDevices(routines[key]);
+    return "Ran routine \"" + key + "\":\n" + r.text;
   }
 
   return { getHomeState, setDevices, runRoutine };

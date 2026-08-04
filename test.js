@@ -19,6 +19,9 @@
  */
 
 const assert = require("assert");
+const fs = require("fs");
+const path = require("path");
+const { spawnSync } = require("child_process");
 const { createCore, resolveService } = require("./home-core.js");
 const { createRouter } = require("./router.js");
 
@@ -40,6 +43,22 @@ function fakeHA(states) {
     calls,
     async getStates() { return states; },
     async callService(domain, service, data) { calls.push({ domain, service, data }); return null; },
+  };
+}
+// RH-14 fixtures: a totally-unreachable HA, and a flaky one that fails specific entities.
+function downHA() {
+  const err = () => { throw new Error("Home Assistant unreachable at http://localhost:8123 (connection failed)"); };
+  return { async getStates() { err(); }, async callService() { err(); } };
+}
+function flakyHA(states, failIds) {
+  const calls = [], fail = new Set(failIds);
+  return {
+    calls,
+    async getStates() { return states; },
+    async callService(domain, service, data) {
+      if (fail.has(data.entity_id)) throw new Error("Home Assistant returned HTTP 500 for POST /api/services/" + domain + "/" + service);
+      calls.push({ domain, service, data }); return null;
+    },
   };
 }
 
@@ -115,7 +134,7 @@ const CONFIG = {
     const ha = fakeHA(STATES);
     const c = createCore({ ha, config: CONFIG });
     const out = await c.setDevices([{ target: "front door", state: "off" }]);
-    assert.ok(out.includes("needs confirmation"), "surfaces the gate");
+    assert.ok(out.text.includes("needs confirmation"), "surfaces the gate");
     assert.strictEqual(ha.calls.length, 0, "nothing actuated");
   });
   await atest("gated lock actuates WITH confirm:true", async () => {
@@ -129,14 +148,14 @@ const CONFIG = {
     const ha = fakeHA(STATES);
     const c = createCore({ ha, config: { ...CONFIG, gates: { "light.kitchen": "block" } } });
     const out = await c.setDevices([{ target: "kitchen light", state: "off" }]);
-    assert.ok(out.includes("blocked"));
+    assert.ok(out.text.includes("blocked"));
     assert.strictEqual(ha.calls.length, 0);
   });
   await atest("unknown target is reported, not guessed", async () => {
     const ha = fakeHA(STATES);
     const c = createCore({ ha, config: CONFIG });
     const out = await c.setDevices([{ target: "disco ball", state: "on" }]);
-    assert.ok(out.includes("unknown target"));
+    assert.ok(out.text.includes("unknown target"));
     assert.strictEqual(ha.calls.length, 0);
   });
 
@@ -236,6 +255,68 @@ const CONFIG = {
     assert.strictEqual(r.handled, false);
     assert.strictEqual(r.escalate, "no-match");
     assert.strictEqual(ha.calls.length, 0);
+  });
+
+  // ------------------------------------------------------------ RH-14 resilience
+  // HA down or flaking must degrade HONESTLY: a clear error on reads, no false success
+  // on writes, and a partial group failure that names exactly what did and didn't land.
+  console.log("\nresilience (RH-14)");
+
+  await atest("get_home_state returns a clear error (not a crash) when HA is unreachable", async () => {
+    const c = createCore({ ha: downHA(), config: CONFIG });
+    const out = await c.getHomeState();
+    assert.ok(/couldn'?t read the home/i.test(out), "clear, human error");
+    assert.ok(/unreachable/i.test(out), "names the cause");
+  });
+  await atest("set_devices reports failure, not false success, when HA is unreachable", async () => {
+    const c = createCore({ ha: downHA(), config: CONFIG });
+    const r = await c.setDevices([{ target: "kitchen light", state: "on" }]);
+    assert.strictEqual(r.ok, false);
+    assert.strictEqual(r.actuationFailed, true);
+    assert.ok(r.text.includes("failed") && /unreachable/i.test(r.text));
+  });
+  await atest("set_devices on a group names exactly which succeeded and which failed", async () => {
+    const ha = flakyHA(STATES, ["light.hall"]);              // hall fails, kitchen succeeds
+    const c = createCore({ ha, config: CONFIG });            // downstairs lights = [kitchen, hall]
+    const r = await c.setDevices([{ target: "downstairs lights", state: "off" }]);
+    assert.strictEqual(r.actuationFailed, true);
+    assert.strictEqual(r.ok, false);
+    assert.deepStrictEqual(r.results.filter((x) => x.status === "ok").map((x) => x.id), ["light.kitchen"]);
+    assert.deepStrictEqual(r.results.filter((x) => x.status === "failed").map((x) => x.id), ["light.hall"]);
+    assert.strictEqual(ha.calls.length, 1, "only the successful actuation was recorded");
+  });
+  await atest("reflex router does NOT claim success when the actuation failed", async () => {
+    const r = await mkRouter(downHA()).handle("turn on the kitchen light");
+    assert.strictEqual(r.handled, true);
+    assert.strictEqual(r.ok, false);
+    assert.ok(!/kitchen light on\b/i.test(r.reply), "reply must not fake success");
+    assert.ok(/down|unreach|couldn/i.test(r.reply), "reply is honest about the failure");
+  });
+
+  // ------------------------------------------------------- server + shipped config
+  // Exercise the REAL server.js JSON-RPC stdio loop (not just the core), and prove the
+  // example config a user copies actually loads and is internally consistent.
+  console.log("\nserver + config (congruence)");
+
+  test("MCP stdio: initialize + tools/list over the real server.js", () => {
+    const input =
+      JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }) + "\n" +
+      JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/list" }) + "\n";
+    const res = spawnSync(process.execPath, [path.join(__dirname, "server.js")], { input, encoding: "utf8", timeout: 8000 });
+    const lines = (res.stdout || "").trim().split("\n").filter(Boolean).map((l) => JSON.parse(l));
+    const init = lines.find((l) => l.id === 1), list = lines.find((l) => l.id === 2);
+    assert.strictEqual(init.result.serverInfo.name, "resonance-home");
+    assert.ok(init.result.serverInfo.version, "serverInfo carries a version");
+    assert.deepStrictEqual(list.result.tools.map((t) => t.name).sort(), ["get_home_state", "run_routine", "set_devices"]);
+  });
+  test("home-config.example.json is valid, loads, and its gates reference real aliases", () => {
+    const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, "home-config.example.json"), "utf8"));
+    const c = createCore({ ha: fakeHA([]), config: cfg });
+    assert.ok(c.getHomeState && c.setDevices && c.runRoutine, "core builds from the example");
+    const targets = new Set(Object.values(cfg.aliases).flat());
+    for (const id of Object.keys(cfg.gates || {})) assert.ok(targets.has(id), "gate references a known entity: " + id);
+    for (const steps of Object.values(cfg.routines || {}))
+      for (const s of steps) assert.ok(cfg.aliases[s.target], "routine step targets a known alias: " + s.target);
   });
 
   console.log("\n" + passed + " passed, " + failed + " failed");

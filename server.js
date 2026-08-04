@@ -108,7 +108,7 @@ async function callTool(name, args) {
   args = args || {};
   const c = core();
   if (name === "get_home_state") return await c.getHomeState(args.query);
-  if (name === "set_devices") return await c.setDevices(args.changes);
+  if (name === "set_devices") return (await c.setDevices(args.changes)).text;
   if (name === "run_routine") return await c.runRoutine(args.name);
   throw new Error("unknown tool: " + name);
 }

@@ -9,6 +9,17 @@ grows in the substrate, not in the API.
 ## [Unreleased]
 
 ### Added
+- **RH-14 · Resilience.** `set_devices` returns a structured `{ text, ok, actuationFailed,
+  results }` result so success is distinguishable from failure without parsing prose; the reflex
+  router uses it to avoid voicing a false "done" when Home Assistant is unreachable;
+  `get_home_state` degrades to a clear message instead of throwing; `ha-client` reports
+  "unreachable" distinctly from an HTTP error. A partial group failure names exactly which
+  entity succeeded and which didn't.
+- **Wider test coverage & CI congruence** — an MCP stdio smoke test that drives the real
+  `server.js` JSON-RPC loop (`initialize` + `tools/list`), a validity check on the shipped
+  `home-config.example.json` (gates and routines must reference real aliases), resilience
+  regression tests, and a `node --check` syntax pass over every source file in CI (catches
+  breakage in files the tests don't import).
 - **`system-prompt.md`** — an optional copy-in system prompt for weaker local models that
   forget to call tools, or actuate a device without checking the house first. Nudges the model
   to `get_home_state` before acting and to never actuate a gated device (lock/garage) on a guess.

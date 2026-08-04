@@ -41,16 +41,24 @@ class HAClient {
   async _req(path, init = {}) {
     if (!this.baseUrl) throw new Error("HA_URL is not set");
     if (!this.token) throw new Error("HA_TOKEN is not set");
-    const res = await fetch(this.baseUrl + path, {
-      ...init,
-      headers: {
-        Authorization: "Bearer " + this.token,
-        "Content-Type": "application/json",
-        ...(init.headers || {}),
-      },
-      signal: AbortSignal.timeout(this.timeoutMs),
-    });
-    if (!res.ok) throw new Error("HA " + init.method + " " + path + " -> HTTP " + res.status);
+    let res;
+    try {
+      res = await fetch(this.baseUrl + path, {
+        ...init,
+        headers: {
+          Authorization: "Bearer " + this.token,
+          "Content-Type": "application/json",
+          ...(init.headers || {}),
+        },
+        signal: AbortSignal.timeout(this.timeoutMs),
+      });
+    } catch (e) {
+      // Network-level failure (host down, DNS, timeout) - distinct from an HTTP error
+      // status, and the common case for RH-14. Give a message a human can act on.
+      const why = e && e.name === "TimeoutError" ? "timed out" : (e && e.message) || "connection failed";
+      throw new Error("Home Assistant unreachable at " + this.baseUrl + " (" + why + ")");
+    }
+    if (!res.ok) throw new Error("Home Assistant returned HTTP " + res.status + " for " + init.method + " " + path);
     // Some service calls return an empty body; guard the JSON parse.
     const text = await res.text();
     return text ? JSON.parse(text) : null;
