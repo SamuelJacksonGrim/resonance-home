@@ -5,7 +5,22 @@ local setup that feels genuinely intelligent** — a small model reasoning over 
 without the interface ever getting more dangerous or more cognitively demanding. Sophistication
 grows in the substrate; the model keeps seeing three verbs and friendly names.
 
-Status legend: **done** · **next** · **planned** · **exploring**.
+## Status vocabulary
+
+What each tag means, roughly along the lifecycle. The one that matters most for this project is
+the gap between **done** and **live**: almost everything is currently verified against a *fake*
+Home Assistant, and nothing has been proven on a *real* house yet.
+
+| Tag | Meaning |
+|---|---|
+| **live** | Shipped **and verified against a real Home Assistant** (for a doc/tool: validated in real use). The real bar. Nothing is here yet. |
+| **done** | Built and passing tests, but **only against the fake-HA harness** — not yet validated live. Most of Phase 0 sits here. |
+| **in progress** | Actively being built right now; partially landed. |
+| **next** | The immediate next item to pick up. |
+| **planned** | Accepted and specified, not started. |
+| **exploring** | Being researched or designed; may change shape or be dropped. |
+| **benched** | Built or specced, then deliberately **paused awaiting a dependency, decision, or measurement**. Not abandoned — will resume. |
+| **shelved** | Deliberately set aside / deprioritized indefinitely. Kept for the record, off the near path. |
 
 ## Phase 0 — Core (done, `v0.1`)
 
@@ -14,6 +29,12 @@ Status legend: **done** · **next** · **planned** · **exploring**.
 - **RH-00b · Reflex router.** Deterministic fast-path grammar, fail-open escalation, offline
   dry-run CLI. **done**
 - **RH-00c · Test harness.** 25 dependency-free tests against a fake Home Assistant. **done**
+- **RH-00d · System prompt for weaker models.** The copy-in `system-prompt.md` that nudges a
+  small model to check state before acting and never actuate a gated device on a guess.
+  **in progress** — the prompt is written and shipped as a paste-in file; what's left is baking
+  it into the exe as a one-click copy (`RH-12`) and validating it against a real weak model,
+  which is why it isn't **live**. *Acceptance: a model that ignored the tools starts calling
+  `get_home_state` before acting once the block is pasted in.*
 
 ## Phase 1 — Make it real
 
