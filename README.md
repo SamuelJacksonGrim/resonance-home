@@ -167,6 +167,7 @@ opened on a guess).
 ## Docs
 
 - [`CLAUDE.md`](CLAUDE.md) — architecture, invariants, and conventions (for AI assistants and contributors).
+- [`DEVELOPERS.md`](DEVELOPERS.md) — condensed developer notes (files, substrate, the two tiers, the gates).
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — dev setup and the before-a-PR checklist.
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) — phased plan with milestones (`RH-01` …).
 - [`eval/README.md`](eval/README.md) — the router eval golden (safety + coverage).

@@ -48,6 +48,7 @@ model cannot misuse it.**
 | `system-prompt.md` | Optional copy-in system prompt for weaker models that forget to call tools (or actuate without checking). Baked into the exe at `RH-12`. |
 | `docs/ROADMAP.md` | Phased plan (`RH-01` …) with acceptance criteria. |
 | `README.md` / `CHANGELOG.md` | User-facing overview / Keep-a-Changelog history. |
+| `DEVELOPERS.md` / `CONTRIBUTING.md` | Condensed developer notes / contributor setup + before-a-PR checklist. |
 
 ## Commands
 
