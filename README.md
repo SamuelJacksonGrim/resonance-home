@@ -7,6 +7,15 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![MCP server](https://img.shields.io/badge/MCP-server-111111)](https://modelcontextprotocol.io/)
 
+## License
+
+This project is dual-licensed under **AGPL-3.0-only** OR a commercial license.
+
+- [LICENSE](LICENSE) — GNU AGPL-3.0-only (the free track)
+- [LICENSING.md](LICENSING.md) — how the two tracks work
+- [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) — the commercial agreement
+- [NOTICE](NOTICE) — copyright, SPDX identifier, and provenance
+
 
 **Give your local AI a house it can actually reason about — safely, and without leaving your machine.**
 
@@ -192,8 +201,3 @@ Next: a setup panel for token + aliases, real-HA smoke testing, and covers/scene
 stack as Resonance Memory — **pure Node standard library, zero runtime dependencies, MCP over
 stdio.**
 
-## License
-
-Dual-licensed: [AGPL-3.0-only](LICENSE) or a [commercial license](LICENSING.md).
-
-*Made by the Architect of Resonance.*
