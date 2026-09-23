@@ -1,5 +1,13 @@
 # Resonance Home
 
+[![License: AGPL-3.0-only](https://img.shields.io/badge/license-AGPL--3.0--only-blue)](LICENSE)
+[![dual-license](https://img.shields.io/badge/dual--license-AGPL--3.0--only%20or%20commercial-blueviolet)](LICENSING.md)
+[![CI](https://github.com/SamuelJacksonGrim/resonance-home/actions/workflows/test.yml/badge.svg)](https://github.com/SamuelJacksonGrim/resonance-home/actions/workflows/test.yml)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/docs/Web/JavaScript)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18-339933?logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![MCP server](https://img.shields.io/badge/MCP-server-111111)](https://modelcontextprotocol.io/)
+
+
 **Give your local AI a house it can actually reason about — safely, and without leaving your machine.**
 
 You tell it *"I'm going to bed"* and it turns off the downstairs lights, lowers the heating,
@@ -186,6 +194,6 @@ stdio.**
 
 ## License
 
-GPL-3.0 — see [`LICENSE`](LICENSE).
+Dual-licensed: [AGPL-3.0-only](LICENSE) or a [commercial license](LICENSING.md).
 
 *Made by the Architect of Resonance.*
